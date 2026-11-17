@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preloved Swap Board</title>
+<style>
+  :root {
+    --bg: #faf6f0;
+    --card: #ffffff;
+    --ink: #3d3733;
+    --muted: #8a7f76;
+    --accent: #c96f4a;
+    --accent-dark: #b05a38;
+    --give: #3e8e5f;
+    --give-bg: #e7f4ec;
+    --swap: #b07a1f;
+    --swap-bg: #fbf1dd;
+    --taken: #9a938d;
+    --taken-bg: #efece8;
+    --border: #eee5da;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+  }
+
+  header { text-align: center; margin-bottom: 20px; }
+
+  header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--accent-dark);
+    letter-spacing: 0.2px;
+  }
+
+  header p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin: 26px 0 10px;
+  }
+
+  /* Filter and status */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .filters button {
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .filters button:hover { border-color: var(--accent); }
+
+  .filters button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .count-chip {
+    background: var(--give-bg);
+    color: var(--give);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Item board */
+  .board {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 560px) {
+    .board { grid-template-columns: 1fr 1fr; }
+  }
+
+  .item-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(61, 55, 51, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .item-card.taken-card {
+    background: var(--taken-bg);
+    opacity: 0.75;
+  }
+
+  .item-card .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .item-card h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.3;
+  }
+
+  .item-card.taken-card h3 {
+    text-decoration: line-through;
+    color: var(--taken);
+  }
+
+  .badge {
+    flex-shrink: 0;
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge.give { background: var(--give-bg); color: var(--give); }
+  .badge.swap { background: var(--swap-bg); color: var(--swap); }
+  .badge.taken { background: #e3ded8; color: var(--taken); }
+
+  .item-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+
+  .chip {
+    background: #f3ece3;
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .btn-taken {
+    align-self: flex-start;
+    margin-top: 4px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    padding: 7px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-taken:hover { background: var(--accent-dark); }
+
+  /* Map */
+  .map-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(61, 55, 51, 0.05);
+  }
+
+  .map-svg { display: block; width: 100%; height: auto; border-radius: 10px; }
+
+  .map-pin { cursor: pointer; }
+
+  .map-pin circle.dot {
+    stroke: #fff;
+    stroke-width: 2;
+    transition: r 0.15s;
+  }
+
+  .map-pin.give circle.dot { fill: var(--give); }
+  .map-pin.swap circle.dot { fill: var(--swap); }
+  .map-pin:hover circle.dot { r: 11; }
+
+  .map-pin text {
+    font-size: 11px;
+    font-weight: 700;
+    fill: #fff;
+    pointer-events: none;
+  }
+
+  .map-pin.mixed circle.dot { fill: var(--accent); }
+
+  .map-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .map-legend .key { display: flex; align-items: center; gap: 6px; }
+
+  .map-legend .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  .map-legend .give { background: var(--give); }
+  .map-legend .swap { background: var(--swap); }
+
+  .map-caption {
+    margin: 10px 2px 0;
+    min-height: 44px;
+    color: var(--ink);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .map-caption .hint { color: var(--muted); }
+
+  .map-note {
+    margin: 8px 2px 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .taken-label {
+    margin-top: 4px;
+    color: var(--taken);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    background: var(--card);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 28px 16px;
+    font-size: 0.95rem;
+  }
+
+  .flash {
+    animation: flash 1.4s ease-out;
+  }
+
+  @keyframes flash {
+    0% { background: #fdeedd; }
+    100% { background: var(--card); }
+  }
+
+  /* Add item form */
+  form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(61, 55, 51, 0.05);
+    display: grid;
+    gap: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fff;
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  @media (max-width: 480px) {
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+  textarea { resize: vertical; min-height: 64px; }
+
+  .type-picker { display: flex; gap: 8px; }
+
+  .type-picker input { display: none; }
+
+  .type-picker span {
+    display: block;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .type-picker input:checked + span.give {
+    background: var(--give-bg);
+    border-color: var(--give);
+    color: var(--give);
+  }
+
+  .type-picker input:checked + span.swap {
+    background: var(--swap-bg);
+    border-color: var(--swap);
+    color: var(--swap);
+  }
+
+  .form-error {
+    display: none;
+    color: #b3402e;
+    background: #fbe9e5;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .form-error.show { display: block; }
+
+  .btn-post {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    padding: 11px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-post:hover { background: var(--accent-dark); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧺 Preloved Swap Board</h1>
+    <p>Pass it on, neighbour — give what you love, swap what you don't.</p>
+  </header>
+
+  <!-- Section 3: Filter and status -->
+  <div class="section-title">Filter &amp; Status</div>
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button type="button" data-filter="all" class="active">All</button>
+      <button type="button" data-filter="give">To give</button>
+      <button type="button" data-filter="swap">To swap</button>
+    </div>
+    <div class="count-chip" id="count-chip">0 items available</div>
+  </div>
+
+  <!-- Section 1: Item board -->
+  <div class="section-title">Item Board</div>
+  <div class="board" id="board"></div>
+
+  <!-- Map region -->
+  <div class="section-title">Where to Find Them</div>
+  <div class="map-card">
+    <svg id="map" class="map-svg" viewBox="0 0 360 300" role="img" aria-label="Playful map of Malaysia with item pins"></svg>
+    <div class="map-legend">
+      <span class="key"><span class="swatch give"></span> To give</span>
+      <span class="key"><span class="swatch swap"></span> To swap</span>
+    </div>
+    <div class="map-caption" id="map-caption"></div>
+  </div>
+  <p class="map-note">Tap a pin to see what's on offer in that area. Filter buttons apply here too.</p>
+
+  <!-- Section 2: Add item form -->
+  <div class="section-title">Add an Item</div>
+  <form id="add-form" novalidate>
+    <div>
+      <label for="item-name">Item name</label>
+      <input type="text" id="item-name" placeholder="e.g. Baju raya, kids size 8" maxlength="80">
+    </div>
+    <div>
+      <label for="item-note">Short note</label>
+      <textarea id="item-note" placeholder="Condition, pickup area, anything helpful…" maxlength="200"></textarea>
+    </div>
+    <div class="field-row">
+      <div>
+        <label for="item-value">Minimum value (RM, optional)</label>
+        <input type="number" id="item-value" min="0" step="1" inputmode="numeric" placeholder="e.g. 20">
+      </div>
+      <div>
+        <label for="item-year">Year made (optional)</label>
+        <input type="number" id="item-year" min="1900" max="2026" step="1" inputmode="numeric" placeholder="e.g. 2019">
+      </div>
+    </div>
+    <div>
+      <label for="item-area">Location (area)</label>
+      <select id="item-area">
+        <option value="">Choose an area…</option>
+      </select>
+    </div>
+    <div>
+      <label>Type</label>
+      <div class="type-picker">
+        <label>
+          <input type="radio" name="type" value="give" checked>
+          <span class="give">🎁 To give</span>
+        </label>
+        <label>
+          <input type="radio" name="type" value="swap">
+          <span class="swap">🔄 To swap</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-error" id="form-error">Please give your item a name first.</div>
+    <button type="submit" class="btn-post">Post to board</button>
+  </form>
+</div>
+
+<script>
+  const AREAS = {
+    "Kuala Lumpur": { lat: 3.139, lng: 101.6869 },
+    "Petaling Jaya": { lat: 3.1073, lng: 101.6067 },
+    "Taman Tun Dr Ismail": { lat: 3.1466, lng: 101.6318 },
+    "Melaka (Bandar Hilir)": { lat: 2.1944, lng: 102.2493 },
+    "Georgetown, Penang": { lat: 5.4141, lng: 100.3288 },
+    "Johor Bahru": { lat: 1.4927, lng: 103.7414 },
+    "Ipoh": { lat: 4.5975, lng: 101.0901 },
+    "Klang": { lat: 3.0449, lng: 101.4455 },
+    "Shah Alam": { lat: 3.0738, lng: 101.5183 },
+    "Seremban": { lat: 2.7297, lng: 101.9381 }
+  };
+
+  const seedItems = [
+    {
+      name: "Baju raya set, kids size 8",
+      note: "Worn once for Raya at kampung in Melaka. Washed and pressed, ready for a new family.",
+      type: "give",
+      value: null,
+      year: null,
+      area: "Melaka (Bandar Hilir)",
+      taken: false
+    },
+    {
+      name: "Panasonic rice cooker 1.8L",
+      note: "Still cooks great, just upgraded to a bigger one. Would happily swap for a stand fan.",
+      type: "swap",
+      value: 40,
+      year: 2017,
+      area: "Kuala Lumpur",
+      taken: false
+    },
+    {
+      name: "BM storybooks (Siri Sang Kancil)",
+      note: "6 books, good condition, suitable for ages 6–9. Free to a young bookworm in PJ.",
+      type: "give",
+      value: null,
+      year: 2015,
+      area: "Petaling Jaya",
+      taken: false
+    }
+  ];
+
+  let items = [...seedItems];
+  let activeFilter = "all";
+
+  const board = document.getElementById("board");
+  const countChip = document.getElementById("count-chip");
+  const form = document.getElementById("add-form");
+  const nameInput = document.getElementById("item-name");
+  const noteInput = document.getElementById("item-note");
+  const valueInput = document.getElementById("item-value");
+  const yearInput = document.getElementById("item-year");
+  const areaSelect = document.getElementById("item-area");
+  const formError = document.getElementById("form-error");
+
+  for (const area of Object.keys(AREAS)) {
+    const opt = document.createElement("option");
+    opt.value = area;
+    opt.textContent = area;
+    areaSelect.appendChild(opt);
+  }
+
+  // Playful SVG map — hand-drawn style, fully offline
+  const mapSvg = document.getElementById("map");
+  const mapCaption = document.getElementById("map-caption");
+  let selectedArea = null;
+
+  // x/y pin positions tuned to the cartoon outlines below
+  // (Klang Valley areas spread out so pins don't cover each other)
+  const AREA_PINS = {
+    "Kuala Lumpur":          { x: 176, y: 160 },
+    "Petaling Jaya":         { x: 157, y: 153 },
+    "Taman Tun Dr Ismail":   { x: 167, y: 144 },
+    "Shah Alam":             { x: 145, y: 163 },
+    "Klang":                 { x: 134, y: 170 },
+    "Seremban":              { x: 162, y: 180 },
+    "Melaka (Bandar Hilir)": { x: 173, y: 192 },
+    "Johor Bahru":           { x: 205, y: 224 },
+    "Ipoh":                  { x: 132, y: 138 },
+    "Georgetown, Penang":    { x: 106, y: 116 }
+  };
+
+  const MAP_ART = `
+    <defs>
+      <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#cfe8f5"/>
+        <stop offset="1" stop-color="#b5dcee"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="360" height="300" rx="12" fill="url(#sea)"/>
+    <path d="M18 52 q8 -6 14 2 q6 8 -2 12 q-10 4 -14 -4 q-2 -6 2 -10 Z" fill="#a3d5f0"/>
+    <path d="M52 26 q10 -4 14 6 q2 10 -8 12 q-9 2 -11 -7 q-1 -7 5 -11 Z" fill="#a3d5f0"/>
+    <path d="M330 70 q10 -2 12 8 q0 10 -10 10 q-9 0 -10 -9 q0 -7 8 -9 Z" fill="#a3d5f0"/>
+    <path d="M40 250 q12 -6 18 6 q4 12 -8 15 q-12 3 -15 -9 q-2 -8 5 -12 Z" fill="#a3d5f0"/>
+    <path d="M318 246 q10 -4 14 6 q3 10 -7 12 q-10 2 -12 -8 q-1 -6 5 -10 Z" fill="#a3d5f0"/>
+    <path d="M258 120 q22 -10 32 6 q10 16 0 28 q-12 13 -27 5 q-16 -9 -12 -24 q3 -11 7 -15 Z" fill="#bfe3c4"/>
+    <path d="M262 185 q18 -8 26 6 q8 14 -2 22 q-12 10 -24 2 q-12 -9 -6 -21 q3 -6 6 -9 Z" fill="#bfe3c4"/>
+    <path d="M96 96 q14 -12 26 -4 q-2 -14 12 -16 q16 -2 18 12 q2 12 -8 16 q4 10 -6 16 q-12 7 -21 -2 q-10 4 -17 -4 q-8 -9 -4 -18 Z" fill="#bfe3c4"/>
+    <path d="M92 128 q26 -18 52 -8 q22 9 20 30 q-2 18 -20 24 q4 12 -8 20 q-14 9 -26 0 q-10 -8 -6 -18 q-16 -4 -20 -20 q-4 -18 8 -28 Z" fill="#c8e6cd"/>
+    <path d="M138 196 q18 -10 30 2 q10 10 4 22 q-8 13 -24 9 q-14 -4 -16 -16 q-1 -10 6 -17 Z" fill="#c8e6cd"/>
+    <path d="M156 232 q22 -14 40 -2 q16 11 12 28 q-4 14 -20 17 q-18 3 -28 -9 q-9 -11 -10 -20 q-1 -9 6 -14 Z" fill="#c8e6cd"/>
+    <path d="M112 214 q10 -8 20 -2 q8 6 4 14 q-6 9 -16 6 q-9 -3 -10 -10 q-1 -5 2 -8 Z" fill="#bfe3c4"/>
+    <text x="70" y="70" font-size="11" fill="#7fa8bc" font-weight="700">🌊 Straits of Malacca</text>
+    <text x="248" y="105" font-size="11" fill="#7fa8bc" font-weight="700">🌊 South China Sea</text>
+    <text x="120" y="115" font-size="10" fill="#6a9678" font-weight="700">⛰️ Pahang</text>
+    <text x="128" y="142" font-size="10" fill="#6a9678" font-weight="700">🌴 Perak</text>
+    <text x="150" y="172" font-size="10" fill="#6a9678" font-weight="700">🏝️ Selangor</text>
+    <text x="166" y="204" font-size="10" fill="#6a9678" font-weight="700">⛳ Melaka</text>
+    <text x="192" y="248" font-size="10" fill="#6a9678" font-weight="700">🌴 Johor</text>
+    <text x="252" y="152" font-size="10" fill="#6a9678" font-weight="700">🌴 Borneo</text>
+  `;
+
+  function areaStats() {
+    const stats = {};
+    for (const item of visibleItems()) {
+      if (item.area && AREA_PINS[item.area]) {
+        if (!stats[item.area]) stats[item.area] = { give: 0, swap: 0 };
+        stats[item.area][item.type]++;
+      }
+    }
+    return stats;
+  }
+
+  function renderMap() {
+    const stats = areaStats();
+    let html = MAP_ART;
+
+    for (const [area, s] of Object.entries(stats)) {
+      const pin = AREA_PINS[area];
+      const n = s.give + s.swap;
+      const kind = s.give > 0 && s.swap > 0 ? "mixed" : s.give > 0 ? "give" : "swap";
+      const r = n === 1 ? 8 : n === 2 ? 10 : 12;
+      html += `<g class="map-pin ${kind}" data-area="${area}">
+        <circle class="dot" cx="${pin.x}" cy="${pin.y}" r="${r}"/>
+        <text x="${pin.x}" y="${pin.y + 4}" text-anchor="middle">${n}</text>
+      </g>`;
+    }
+
+    mapSvg.innerHTML = html;
+
+    if (selectedArea && stats[selectedArea]) {
+      const list = visibleItems().filter(i => i.area === selectedArea);
+      mapCaption.innerHTML = `<strong>${selectedArea}</strong> — ` +
+        list.map(i => `${i.name} (${i.type === "give" ? "to give" : "to swap"})`).join(" · ");
+    } else {
+      const total = visibleItems().filter(i => i.area && AREA_PINS[i.area]).length;
+      mapCaption.innerHTML = total
+        ? `<span class="hint">${total} item${total === 1 ? "" : "s"} pinned on the map — tap a pin to see what's there!</span>`
+        : `<span class="hint">Nothing to show on the map yet — post an item with a location!</span>`;
+    }
+  }
+
+  mapSvg.addEventListener("click", e => {
+    const pin = e.target.closest(".map-pin");
+    if (!pin) return;
+    selectedArea = selectedArea === pin.dataset.area ? null : pin.dataset.area;
+    renderMap();
+  });
+
+  function visibleItems() {
+    return items.filter(i =>
+      !i.taken && (activeFilter === "all" || i.type === activeFilter)
+    );
+  }
+
+  function availableCount() {
+    return items.filter(i => !i.taken).length;
+  }
+
+  function typeBadge(item) {
+    if (item.taken) return '<span class="badge taken">Taken</span>';
+    return item.type === "give"
+      ? '<span class="badge give">To give</span>'
+      : '<span class="badge swap">To swap</span>';
+  }
+
+  function chipsHtml(item) {
+    const chips = [];
+    if (item.value !== null && item.value !== "") {
+      chips.push(`RM ${item.value} min`);
+    }
+    if (item.year) chips.push(`Made ${item.year}`);
+    if (item.area) chips.push(`📍 ${item.area}`);
+    if (chips.length === 0) return "";
+    return '<div class="chips">' +
+      chips.map(c => `<span class="chip">${c}</span>`).join("") +
+      "</div>";
+  }
+
+  function renderPins() {
+    renderMap();
+  }
+
+  function render() {
+    const visible = visibleItems();
+    const takenItems = activeFilter === "all" ? items.filter(i => i.taken) : [];
+
+    board.innerHTML = "";
+
+    if (visible.length === 0 && takenItems.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Nothing here yet — try another filter, or post an item below!";
+      board.appendChild(empty);
+    }
+
+    for (const item of visible) {
+      board.appendChild(cardFor(item));
+    }
+    for (const item of takenItems) {
+      board.appendChild(cardFor(item));
+    }
+
+    countChip.textContent = availableCount() + (availableCount() === 1 ? " item available" : " items available");
+    renderPins();
+  }
+
+  function cardFor(item) {
+    const card = document.createElement("div");
+    card.className = "item-card" + (item.taken ? " taken-card" : "");
+    card.innerHTML = `
+      <div class="top">
+        <h3></h3>
+        ${typeBadge(item)}
+      </div>
+      <p class="item-note"></p>
+    `;
+    card.querySelector("h3").textContent = item.name;
+    card.querySelector(".item-note").textContent = item.note;
+
+    const chipsHost = card.querySelector(".top");
+    const chips = chipsHtml(item);
+    if (chips) chipsHost.insertAdjacentHTML("afterend", chips);
+
+    if (!item.taken) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn-taken";
+      btn.textContent = "✓ Taken";
+      btn.addEventListener("click", () => {
+        item.taken = true;
+        render();
+      });
+      card.appendChild(btn);
+    } else {
+      const label = document.createElement("div");
+      label.className = "taken-label";
+      label.textContent = "Found a new home 🏡";
+      card.appendChild(label);
+    }
+
+    return card;
+  }
+
+  document.getElementById("filters").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-filter]");
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    document.querySelectorAll("#filters button").forEach(b =>
+      b.classList.toggle("active", b === btn)
+    );
+    render();
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) {
+      formError.textContent = "Please give your item a name first.";
+      formError.classList.add("show");
+      nameInput.focus();
+      return;
+    }
+
+    const rawValue = valueInput.value.trim();
+    if (rawValue !== "" && (!Number.isInteger(Number(rawValue)) || Number(rawValue) < 0)) {
+      formError.textContent = "Minimum value must be a whole number of ringgit (e.g. 20).";
+      formError.classList.add("show");
+      valueInput.focus();
+      return;
+    }
+
+    const rawYear = yearInput.value.trim();
+    if (rawYear !== "" && (!Number.isInteger(Number(rawYear)) || Number(rawYear) < 1900 || Number(rawYear) > 2026)) {
+      formError.textContent = "Year made must be between 1900 and 2026.";
+      formError.classList.add("show");
+      yearInput.focus();
+      return;
+    }
+
+    formError.classList.remove("show");
+
+    const item = {
+      name: name,
+      note: noteInput.value.trim(),
+      type: form.querySelector('input[name="type"]:checked').value,
+      value: rawValue === "" ? null : Number(rawValue),
+      year: rawYear === "" ? null : Number(rawYear),
+      area: areaSelect.value || null,
+      taken: false
+    };
+    items.unshift(item);
+
+    // Show the new card no matter which filter is on
+    if (activeFilter !== "all" && activeFilter !== item.type) {
+      activeFilter = "all";
+      document.querySelectorAll("#filters button").forEach(b =>
+        b.classList.toggle("active", b.dataset.filter === "all")
+      );
+    }
+
+    render();
+
+    const firstCard = board.querySelector(".item-card");
+    if (firstCard) {
+      firstCard.classList.add("flash");
+      firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    form.reset();
+    nameInput.focus();
+  });
+
+  nameInput.addEventListener("input", () => formError.classList.remove("show"));
+
+  render();
+</script>
+</body>
+</html>
